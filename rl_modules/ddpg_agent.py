@@ -235,12 +235,12 @@ class ddpg_agent:
     # do the evaluation
     def _eval_agent(self):
         total_success_rate = []
-        for _ in range(self.args.n_test_rollouts):
+        for ntr in range(self.args.n_test_rollouts):
             per_success_rate = []
             observation = self.env.reset()
             obs = observation['observation']
             g = observation['desired_goal']
-            for _ in range(self.env_params['max_timesteps']):
+            for timesteps in range(self.env_params['max_timesteps']):
                 with torch.no_grad():
                     input_tensor = self._preproc_inputs(obs, g)
                     pi = self.actor_network(input_tensor)
@@ -249,6 +249,8 @@ class ddpg_agent:
                 observation_new, _, _, info = self.env.step(actions)
                 obs = observation_new['observation']
                 g = observation_new['desired_goal']
+                ag = observation_new['achieved_goal']
+                print("n_test_rollouts {},timesteps {},distance_threshold = {}, distance = {}, reward = {}, info['is_success']={}".format(ntr, timesteps, self.env.distance_threshold, np.linalg.norm(ag-g), self.env.compute_reward(ag, g, _), info['is_success']))
                 per_success_rate.append(info['is_success'])
             total_success_rate.append(per_success_rate)
         total_success_rate = np.array(total_success_rate)
